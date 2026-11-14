@@ -1,32 +1,89 @@
-# React + TypeScript + Vite
+# Docs Lite
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A lightweight collaborative document editor inspired by Google Docs. Users can create and edit rich-text documents, import files (including PDF), export to PDF, and share documents with other users as viewers or editors.
 
-Currently, two official plugins are available:
+**Live demo:** https://YOUR-APP.vercel.app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Demo accounts** (password for both: `demo123`)
 
-## React Compiler
+Existing Demo accounts:
+| janedoe@demo.com |
+| john.doe@demo.com |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Tip: open one account in a normal window and the other in an incognito window to test sharing.
 
-## Expanding the Oxlint configuration
+## Features
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+- **Documents:** create, rename, edit, delete, reopen after refresh
+- **Rich text:** bold, italic, underline, headings (H1/H2), bulleted and numbered lists
+- **Autosave:** debounced saves with a Saving / Saved / Error indicator and retry
+- **File import:** `.txt`, `.md`, `.docx`, `.pdf` (max 5 MB) become a new editable document
+- **PDF export:** download any document you can open as a PDF
+- **Sharing:** owner shares by email with a Viewer or Editor role; dashboard separates "My documents" from "Shared with me" with owner and role badges; viewers get a read-only editor
+- **Access control:** enforced in the database with Postgres Row Level Security, not only in the UI
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## Tech stack
+
+React + TypeScript + Vite, TipTap (ProseMirror) editor, Supabase (Postgres, Auth, RLS), deployed on Vercel. Tests with Vitest.
+
+## Local setup
+
+**Prerequisites:** Node 18+ and a free Supabase project.
+
+1. Clone and install:
+   ```bash
+   git clone YOUR_REPO_URL
+   cd docs-app
+   npm install
+   ```
+2. Configure environment:
+   ```bash
+   cp .env.example .env
+   ```
+   Fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from Supabase → Project Settings → API.
+3. Create the database: open the Supabase SQL editor and run `supabase/schema.sql` (tables, trigger, RLS policies).
+4. Auth settings: in Authentication → Providers → Email, turn off "Confirm email". Create the demo users above with **Auto Confirm User** ticked.
+5. Run:
+   ```bash
+   npm run dev
+   ```
+   Open http://localhost:5173
+
+## Tests
+
+```bash
+npm test
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Covers the sharing permission logic and the file import validation and conversion.
+
+## Supported file types and limits
+
+| Type | Behavior |
+|---|---|
+| .txt | Paragraphs preserved |
+| .md | Converted to formatted content |
+| .docx | Text and basic formatting; complex styling is lost |
+| .pdf | Text only, no layout, images, or OCR (scanned PDFs are rejected) |
+
+Maximum file size: 5 MB. Imported HTML is sanitized with DOMPurify.
+
+## Known limitations
+
+- No real-time co-editing; concurrent edits are last-write-wins
+- No comments or version history
+- Sharing requires the other person to have signed up already
+- Only the owner can rename or delete a document
+
+See `ARCHITECTURE.md` for the reasoning behind these tradeoffs.
+
+## Project structure
+
+```
+src/
+  components/  Toolbar, ShareDialog, ImportButton, auth wrappers
+  hooks/       useAutosave
+  lib/         supabase client, permissions, importers, PDF import/export
+  pages/       Login, Dashboard, DocPage
+supabase/      schema.sql
+```
