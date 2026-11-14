@@ -5,9 +5,13 @@ import './index.css';
 import App from './App';
 import { AuthProvider } from './components/AuthProvider';
 import ErrorBoundary from './components/ErrorBoundary';
+import { configError } from './lib/supabase';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    {configError ? (
+      <p style={{ padding: 32, color: '#b42318' }}>{configError}</p>
+    ) : (
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
@@ -15,5 +19,6 @@ createRoot(document.getElementById('root')!).render(
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>
+    )}
   </StrictMode>
 );
